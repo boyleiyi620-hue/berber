@@ -9,6 +9,8 @@
   const dashboardView = $('#dashboardView');
   const logoutButton = $('#logoutButton');
   let currentAdmin = null;
+  let currentBusinessSettings = null;
+  let previewObjectUrl = null;
 
   function setNotice(target, message, success = false) {
     const box = $(target);
@@ -42,6 +44,51 @@
   }
   function displayDate(value) {
     return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(`${value}T12:00:00`));
+  }
+  function applyBusinessIdentity(settings) {
+    const name = String(settings.business_name || 'Berber Studio').trim() || 'Berber Studio';
+    const logo = $('#businessLogo');
+    const mark = $('#brandMark');
+    $('#businessName').textContent = name;
+    document.title = `${name} — Yönetim`;
+    document.querySelector('.brand').setAttribute('aria-label', `${name} yönetim paneli`);
+    if (settings.logo_url) {
+      logo.src = settings.logo_url;
+      logo.alt = `${name} logosu`;
+      logo.hidden = false;
+      mark.hidden = true;
+      logo.onerror = () => { logo.hidden = true; mark.hidden = false; };
+    } else {
+      logo.removeAttribute('src');
+      logo.hidden = true;
+      mark.hidden = false;
+    }
+  }
+  function setLogoPreview(url) {
+    const preview = $('#logoPreview');
+    const hint = $('#logoPreviewHint');
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = url?.startsWith('blob:') ? url : null;
+    if (url) {
+      preview.src = url;
+      preview.hidden = false;
+      hint.hidden = true;
+    } else {
+      preview.removeAttribute('src');
+      preview.hidden = true;
+      hint.hidden = false;
+    }
+  }
+  function businessLogoPath(url) {
+    if (!url) return null;
+    try {
+      const pathname = new URL(url).pathname;
+      const marker = '/storage/v1/object/public/business-branding/';
+      const markerIndex = pathname.indexOf(marker);
+      return markerIndex < 0 ? null : decodeURIComponent(pathname.slice(markerIndex + marker.length));
+    } catch {
+      return null;
+    }
   }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -170,7 +217,7 @@
     const [appointmentsResult, staffResult, settingsResult, closuresResult] = await Promise.all([
       supabase.from('appointments').select('id,client_name,phone,note,starts_at,duration_minutes,price,status,staff(name),services(name)').gte('starts_at', startOfMonth).order('starts_at').limit(100),
       supabase.from('staff').select('id,name,active').order('created_at').limit(100),
-      supabase.from('business_settings').select('opening_time,closing_time,open_days').eq('id', 1).single(),
+      supabase.from('business_settings').select('opening_time,closing_time,open_days,business_name,logo_url').eq('id', 1).single(),
       supabase.from('business_closures').select('closed_on,reason').gte('closed_on', today).order('closed_on').limit(1000)
     ]);
     if (appointmentsResult.error) {
@@ -193,6 +240,12 @@
       return;
     }
     const staff = staffResult.data || [];
+    currentBusinessSettings = settingsResult.data;
+    applyBusinessIdentity(currentBusinessSettings);
+    $('#businessNameInput').value = currentBusinessSettings.business_name || 'Berber Studio';
+    $('#businessLogoFile').value = '';
+    $('#removeBusinessLogo').checked = false;
+    setLogoPreview(currentBusinessSettings.logo_url || '');
     $('#staffCount').textContent = String(staff.filter((person) => person.active).length);
     renderStaff(staff);
     renderClosures(closuresResult.data || []);
@@ -244,6 +297,86 @@
     await loadDashboard();
     setNotice('#managementNotice', 'Tarih yeniden randevuya açıldı.', true);
   }
+
+  $('#businessLogoFile').addEventListener('change', (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedTypes.includes(file.type) || file.size > 2 * 1024 * 1024) {
+      event.target.value = '';
+      setLogoPreview(currentBusinessSettings?.logo_url || '');
+      setNotice('#managementNotice', 'Logo PNG, JPG veya WebP olmalı ve 2 MB boyutunu aşmamalı.');
+      return;
+    }
+    $('#removeBusinessLogo').checked = false;
+    setLogoPreview(URL.createObjectURL(file));
+  });
+
+  $('#removeBusinessLogo').addEventListener('change', (event) => {
+    if (event.target.checked) {
+      $('#businessLogoFile').value = '';
+      setLogoPreview('');
+    } else {
+      setLogoPreview(currentBusinessSettings?.logo_url || '');
+    }
+  });
+
+  $('#identityForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    hideNotice('#managementNotice');
+    const name = $('#businessNameInput').value.trim();
+    const file = $('#businessLogoFile').files?.[0] || null;
+    const removeLogo = $('#removeBusinessLogo').checked && !file;
+    if (!name || name.length > 80) {
+      setNotice('#managementNotice', 'İşletme adı 1–80 karakter olmalı.');
+      return;
+    }
+    if (file && (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024)) {
+      setNotice('#managementNotice', 'Logo PNG, JPG veya WebP olmalı ve 2 MB boyutunu aşmamalı.');
+      return;
+    }
+
+    const button = $('#saveIdentityButton');
+    button.disabled = true;
+    button.textContent = 'Kaydediliyor…';
+    let uploadedPath = null;
+    let logoUrl = currentBusinessSettings?.logo_url || null;
+    try {
+      if (file) {
+        const extension = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
+        uploadedPath = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+        const { error: uploadError } = await supabase.storage.from('business-branding').upload(uploadedPath, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false
+        });
+        if (uploadError) return showSaveError(uploadError, 'Logo yüklenemedi. Bağlantıyı kontrol edip tekrar dene.');
+        logoUrl = supabase.storage.from('business-branding').getPublicUrl(uploadedPath).data.publicUrl;
+      } else if (removeLogo) {
+        logoUrl = null;
+      }
+
+      const { error } = await supabase.from('business_settings').update({ business_name: name, logo_url: logoUrl }).eq('id', 1);
+      if (error) {
+        if (uploadedPath) await supabase.storage.from('business-branding').remove([uploadedPath]);
+        return showSaveError(error, 'İşletme bilgileri kaydedilemedi.');
+      }
+
+      const previousPath = businessLogoPath(currentBusinessSettings?.logo_url);
+      if (previousPath && previousPath !== uploadedPath && (file || removeLogo)) {
+        const { error: cleanupError } = await supabase.storage.from('business-branding').remove([previousPath]);
+        if (cleanupError) console.warn('Eski logo temizlenemedi.', cleanupError);
+      }
+    } catch (error) {
+      if (uploadedPath) await supabase.storage.from('business-branding').remove([uploadedPath]);
+      return showSaveError(error, 'İşletme bilgileri kaydedilemedi.');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'İşletme kimliğini kaydet';
+    }
+    await loadDashboard();
+    setNotice('#managementNotice', 'İşletme adı ve logosu güncellendi.', true);
+  });
 
   $('#hoursForm').addEventListener('submit', async (event) => {
     event.preventDefault();

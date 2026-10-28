@@ -20,8 +20,9 @@
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="Randevu sayfasına dön">
-        <span class="brand-mark" aria-hidden="true">✂</span>
-        <span class="brand-copy"><span class="brand-name">BERBER</span><span class="brand-sub">YÖNETİM PANELİ</span></span>
+        <span class="brand-mark" id="brandMark" aria-hidden="true">✂</span>
+        <img class="brand-logo" id="businessLogo" alt="" hidden>
+        <span class="brand-copy"><span class="brand-name" id="businessName">Berber Studio</span><span class="brand-sub">YÖNETİM PANELİ</span></span>
       </a>
       <div class="top-actions"><a class="admin-link" href="./">Randevu sayfası</a><button class="admin-link" id="logoutButton" hidden>Çıkış yap</button></div>
     </header>
@@ -52,6 +53,19 @@
 
         <div class="section-head"><h2>İşletme ayarları</h2><span class="badge">Yöneticiye özel</span></div>
         <div id="managementNotice" class="notice" role="status"></div>
+        <section class="panel management-panel identity-panel">
+          <h3>İşletme adı ve logosu</h3>
+          <p class="muted">Müşterilerin gördüğü işletme adını güncelle veya telefonundan bir logo yükle. PNG, JPG ya da WebP; en fazla 2 MB.</p>
+          <form id="identityForm">
+            <label class="field-label" for="businessNameInput">İşletme adı</label>
+            <input class="field" id="businessNameInput" type="text" maxlength="80" autocomplete="organization" placeholder="Örn. Usta Makas" required>
+            <label class="field-label" for="businessLogoFile">Logo dosyası</label>
+            <input class="field file-field" id="businessLogoFile" type="file" accept="image/png,image/jpeg,image/webp">
+            <div class="logo-preview-row"><img id="logoPreview" class="logo-preview" alt="Logo önizlemesi" hidden><span id="logoPreviewHint" class="muted">Henüz özel logo yüklenmedi; varsayılan makas simgesi gösteriliyor.</span></div>
+            <label class="logo-remove-choice"><input id="removeBusinessLogo" type="checkbox"><span>Yüklediğim logoyu kaldır</span></label>
+            <button class="primary management-submit" id="saveIdentityButton" type="submit">İşletme kimliğini kaydet</button>
+          </form>
+        </section>
         <section class="panel management-panel">
           <h3>Çalışma saatleri ve açık günler</h3>
           <p class="muted">Bu ayarlar müşteri tarafındaki müsait saatleri ve randevu kurallarını günceller.</p>

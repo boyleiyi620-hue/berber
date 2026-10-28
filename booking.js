@@ -27,6 +27,26 @@
     showNotice(message && !/fetch|network|failed/i.test(message) ? message : fallback);
   }
   function money(value) { return `₺${Number(value).toLocaleString('tr-TR')}`; }
+  function applyBusinessIdentity(settings) {
+    const name = String(settings.business_name || 'Berber Studio').trim() || 'Berber Studio';
+    const nameElement = $('#businessName');
+    const logo = $('#businessLogo');
+    const mark = $('#brandMark');
+    nameElement.textContent = name;
+    document.title = `${name} — Randevu al`;
+    document.querySelector('.brand').setAttribute('aria-label', `${name} ana sayfa`);
+    if (settings.logo_url) {
+      logo.src = settings.logo_url;
+      logo.alt = `${name} logosu`;
+      logo.hidden = false;
+      mark.hidden = true;
+      logo.onerror = () => { logo.hidden = true; mark.hidden = false; };
+    } else {
+      logo.removeAttribute('src');
+      logo.hidden = true;
+      mark.hidden = false;
+    }
+  }
   function minutes(time) { const [hours, mins] = String(time).slice(0, 5).split(':').map(Number); return hours * 60 + mins; }
   function weekdayIso(dateValue) {
     const [year, month, day] = dateValue.split('-').map(Number);
@@ -155,7 +175,7 @@
     const [servicesResult, staffResult, settingsResult, closuresResult] = await Promise.all([
       supabase.from('services').select('id,name,description,price,duration_minutes,icon').eq('active', true).order('price'),
       supabase.from('staff').select('id,name').eq('active', true).order('name'),
-      supabase.from('business_settings').select('opening_time,closing_time,open_days').eq('id', 1).single(),
+      supabase.from('business_settings').select('opening_time,closing_time,open_days,business_name,logo_url').eq('id', 1).single(),
       supabase.from('business_closures').select('closed_on,reason').gte('closed_on', localDateString()).order('closed_on').limit(1000)
     ]);
     if (servicesResult.error || staffResult.error || settingsResult.error || closuresResult.error) {
@@ -166,6 +186,7 @@
     state.services = servicesResult.data || [];
     state.staff = staffResult.data || [];
     state.settings = settingsResult.data;
+    applyBusinessIdentity(state.settings);
     state.closedDates = new Map((closuresResult.data || []).map((closure) => [closure.closed_on, closure.reason || '']));
     if (!state.services.length || !state.staff.length) {
       showNotice('Şu anda randevu alınabilecek hizmet veya berber bulunmuyor.');
