@@ -5,6 +5,10 @@ Müşteri randevu sayfası ve yönetici paneli ayrı bağlantılarda çalışır
 - Randevu sayfası: `https://boyleiyi620-hue.github.io/berber/`
 - Yönetici paneli: `https://boyleiyi620-hue.github.io/berber/admin.html`
 
+## Yönetim paneli
+
+Yetkili yönetici hesabıyla giriş yaptıktan sonra haftalık çalışma saatlerini ve açık günleri değiştirebilir, çalışan ekleyip adını güncelleyebilir veya randevuya kapatabilir, ayrıca istisnai kapalı tarihleri yönetebilirsiniz. Çalışan kayıtları geçmiş randevulardaki ilişkiyi korumak için silinmez; pasife alınır. Kapalı tarihler müşteri takviminde gösterilmez ve veritabanı yeni rezervasyonları da reddeder.
+
 ## Ana ekrana uygulama olarak ekleme
 
 Müşteri randevu sayfası ve yönetim paneli ayrı uygulamalar olarak yüklenebilir. Android/Chrome'da ilgili sayfayı açıp tarayıcı menüsünden **Uygulamayı yükle** veya **Ana ekrana ekle** seçeneğini kullanın. iPhone/iPad'de Safari'de sayfayı açıp **Paylaş > Ana Ekrana Ekle** yolunu izleyin. Masaüstü Chrome ve Edge'de adres çubuğundaki yükleme simgesi kullanılabilir.

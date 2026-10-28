@@ -40,6 +40,12 @@
   function displayTimestamp(value) {
     return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
   }
+  function displayDate(value) {
+    return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(`${value}T12:00:00`));
+  }
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  }
   function renderAppointments(rows) {
     const box = $('#appointmentList');
     box.replaceChildren();
@@ -80,35 +86,123 @@
       box.append(card);
     });
   }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  function renderStaff(rows) {
+    const box = $('#staffList');
+    box.replaceChildren();
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">Henüz çalışan eklenmemiş.</div>';
+      return;
+    }
+    rows.forEach((person) => {
+      const card = document.createElement('article');
+      card.className = 'management-item';
+      const info = document.createElement('div');
+      info.className = 'management-main';
+      const avatar = document.createElement('span');
+      avatar.className = 'avatar';
+      avatar.textContent = initials(person.name);
+      const name = document.createElement('input');
+      name.className = 'field staff-name-field';
+      name.type = 'text';
+      name.value = person.name;
+      name.maxLength = 60;
+      name.setAttribute('aria-label', `${person.name} çalışan adı`);
+      info.append(avatar, name);
+      const actions = document.createElement('div');
+      actions.className = 'management-actions';
+      const save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'small-button';
+      save.textContent = 'İsmi kaydet';
+      save.addEventListener('click', () => updateStaffName(person.id, name, save));
+      const active = document.createElement('button');
+      active.type = 'button';
+      active.className = `small-button${person.active ? ' danger' : ''}`;
+      active.textContent = person.active ? 'Pasifleştir' : 'Aktifleştir';
+      active.addEventListener('click', () => toggleStaff(person.id, !person.active, active));
+      actions.append(save, active);
+      const status = document.createElement('span');
+      status.className = `staff-status${person.active ? ' is-active' : ''}`;
+      status.textContent = person.active ? 'Aktif' : 'Pasif';
+      card.append(info, status, actions);
+      box.append(card);
+    });
+  }
+  function renderClosures(rows) {
+    const box = $('#closureList');
+    box.replaceChildren();
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">Kapalı tarih eklenmemiş.</div>';
+      return;
+    }
+    rows.forEach((closure) => {
+      const card = document.createElement('article');
+      card.className = 'management-item closure-item';
+      const info = document.createElement('div');
+      info.className = 'management-main closure-info';
+      const date = document.createElement('strong');
+      date.textContent = displayDate(closure.closed_on);
+      const reason = document.createElement('span');
+      reason.className = 'muted';
+      reason.textContent = closure.reason || 'Açıklama yok';
+      info.append(date, reason);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'small-button danger';
+      remove.textContent = 'Açık yap';
+      remove.addEventListener('click', () => removeClosure(closure.closed_on, remove));
+      card.append(info, remove);
+      box.append(card);
+    });
+  }
+  function showSaveError(error, fallback) {
+    console.error(error);
+    setNotice('#managementNotice', error?.message ? `Kaydedilemedi: ${error.message}` : fallback);
   }
   async function loadDashboard() {
     if (!currentAdmin) return;
     hideNotice('#dashboardNotice');
+    hideNotice('#managementNotice');
     const now = new Date();
     const today = localDateString(now);
     const month = today.slice(0, 7);
     const startOfMonth = new Date(`${month}-01T00:00:00`).toISOString();
-    const [appointmentsResult, staffResult] = await Promise.all([
+    const [appointmentsResult, staffResult, settingsResult, closuresResult] = await Promise.all([
       supabase.from('appointments').select('id,client_name,phone,note,starts_at,duration_minutes,price,status,staff(name),services(name)').gte('starts_at', startOfMonth).order('starts_at').limit(100),
-      supabase.from('staff').select('id').eq('active', true)
+      supabase.from('staff').select('id,name,active').order('created_at').limit(100),
+      supabase.from('business_settings').select('opening_time,closing_time,open_days').eq('id', 1).single(),
+      supabase.from('business_closures').select('closed_on,reason').gte('closed_on', today).order('closed_on').limit(1000)
     ]);
-    if (appointmentsResult.error || staffResult.error) {
-      const error = appointmentsResult.error || staffResult.error;
-      console.error(error);
+    if (appointmentsResult.error) {
+      console.error(appointmentsResult.error);
       setNotice('#dashboardNotice', 'Randevular yüklenemedi. Oturum/yetki durumunu kontrol et ve tekrar dene.');
+    } else {
+      const appointments = appointmentsResult.data || [];
+      const active = appointments.filter((item) => item.status !== 'cancelled');
+      const todayCount = active.filter((item) => localDateString(new Date(item.starts_at)) === today).length;
+      const monthRows = active.filter((item) => localDateString(new Date(item.starts_at)).slice(0, 7) === month);
+      $('#todayCount').textContent = String(todayCount);
+      $('#monthCount').textContent = String(monthRows.length);
+      $('#monthRevenue').textContent = money(monthRows.reduce((sum, item) => sum + Number(item.price), 0));
+      renderAppointments(appointments);
+    }
+    if (staffResult.error || settingsResult.error || closuresResult.error) {
+      const error = staffResult.error || settingsResult.error || closuresResult.error;
+      console.error(error);
+      setNotice('#managementNotice', 'Ekip ve işletme ayarları yüklenemedi. Yetkiyi ve bağlantıyı kontrol et.');
       return;
     }
-    const appointments = appointmentsResult.data || [];
-    const active = appointments.filter((item) => item.status !== 'cancelled');
-    const todayCount = active.filter((item) => localDateString(new Date(item.starts_at)) === today).length;
-    const monthRows = active.filter((item) => localDateString(new Date(item.starts_at)).slice(0, 7) === month);
-    $('#todayCount').textContent = String(todayCount);
-    $('#monthCount').textContent = String(monthRows.length);
-    $('#monthRevenue').textContent = money(monthRows.reduce((sum, item) => sum + Number(item.price), 0));
-    $('#staffCount').textContent = String((staffResult.data || []).length);
-    renderAppointments(appointments);
+    const staff = staffResult.data || [];
+    $('#staffCount').textContent = String(staff.filter((person) => person.active).length);
+    renderStaff(staff);
+    renderClosures(closuresResult.data || []);
+    $('#openingTime').value = String(settingsResult.data.opening_time).slice(0, 5);
+    $('#closingTime').value = String(settingsResult.data.closing_time).slice(0, 5);
+    const openDays = new Set((settingsResult.data.open_days || []).map(Number));
+    document.querySelectorAll('#openDays input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.checked = openDays.has(Number(checkbox.value));
+    });
+    $('#closureDate').min = today;
   }
   async function updateStatus(id, status) {
     const label = status === 'completed' ? 'tamamlandı' : 'iptal edildi';
@@ -118,9 +212,98 @@
       setNotice('#dashboardNotice', 'Durum kaydedilemedi. Yetkini ve bağlantını kontrol et.');
       return;
     }
-    setNotice('#dashboardNotice', `Randevu ${label}.`, true);
     await loadDashboard();
+    setNotice('#dashboardNotice', `Randevu ${label}.`, true);
   }
+  async function updateStaffName(id, input, button) {
+    const name = input.value.trim();
+    if (!name || name.length > 60) {
+      setNotice('#managementNotice', 'Çalışan adı 1–60 karakter olmalı.');
+      return;
+    }
+    button.disabled = true;
+    const { error } = await supabase.from('staff').update({ name }).eq('id', id);
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Çalışan adı kaydedilemedi.');
+    await loadDashboard();
+    setNotice('#managementNotice', 'Çalışan adı güncellendi.', true);
+  }
+  async function toggleStaff(id, active, button) {
+    button.disabled = true;
+    const { error } = await supabase.from('staff').update({ active }).eq('id', id);
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Çalışan durumu güncellenemedi.');
+    await loadDashboard();
+    setNotice('#managementNotice', active ? 'Çalışan yeniden randevuya açıldı.' : 'Çalışan pasife alındı.', true);
+  }
+  async function removeClosure(date, button) {
+    button.disabled = true;
+    const { error } = await supabase.from('business_closures').delete().eq('closed_on', date);
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Kapalı tarih kaldırılamadı.');
+    await loadDashboard();
+    setNotice('#managementNotice', 'Tarih yeniden randevuya açıldı.', true);
+  }
+
+  $('#hoursForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    hideNotice('#managementNotice');
+    const openingTime = $('#openingTime').value;
+    const closingTime = $('#closingTime').value;
+    const openDays = [...document.querySelectorAll('#openDays input[type="checkbox"]:checked')].map((checkbox) => Number(checkbox.value));
+    if (!openingTime || !closingTime || openingTime >= closingTime) {
+      setNotice('#managementNotice', 'Kapanış saati açılış saatinden sonra olmalı.');
+      return;
+    }
+    if (!openDays.length) {
+      setNotice('#managementNotice', 'En az bir açık gün seçmelisin.');
+      return;
+    }
+    const button = $('#saveHoursButton');
+    button.disabled = true;
+    const { error } = await supabase.from('business_settings').update({ opening_time: openingTime, closing_time: closingTime, open_days: openDays }).eq('id', 1);
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Çalışma düzeni kaydedilemedi.');
+    await loadDashboard();
+    setNotice('#managementNotice', 'Çalışma saatleri ve açık günler güncellendi.', true);
+  });
+
+  $('#staffForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    hideNotice('#managementNotice');
+    const name = $('#newStaffName').value.trim();
+    if (!name || name.length > 60) {
+      setNotice('#managementNotice', 'Çalışan adı 1–60 karakter olmalı.');
+      return;
+    }
+    const button = $('#addStaffButton');
+    button.disabled = true;
+    const { error } = await supabase.from('staff').insert({ name, active: true });
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Çalışan eklenemedi.');
+    $('#newStaffName').value = '';
+    await loadDashboard();
+    setNotice('#managementNotice', 'Yeni çalışan eklendi.', true);
+  });
+
+  $('#closureForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    hideNotice('#managementNotice');
+    const closedOn = $('#closureDate').value;
+    if (!closedOn) {
+      setNotice('#managementNotice', 'Lütfen kapatılacak tarihi seç.');
+      return;
+    }
+    const button = $('#addClosureButton');
+    button.disabled = true;
+    const { error } = await supabase.from('business_closures').insert({ closed_on: closedOn, reason: $('#closureReason').value.trim() });
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Kapalı tarih eklenemedi. Aynı tarih zaten eklenmiş olabilir.');
+    $('#closureDate').value = '';
+    $('#closureReason').value = '';
+    await loadDashboard();
+    setNotice('#managementNotice', 'Seçilen tarih kapalı olarak kaydedildi.', true);
+  });
 
   $('#loginForm').addEventListener('submit', async (event) => {
     event.preventDefault();

@@ -4,7 +4,7 @@
     window.BERBER_SUPABASE_PUBLISHABLE_KEY
   );
   const $ = (selector) => document.querySelector(selector);
-  const state = { services: [], staff: [], settings: null, serviceId: null, staffId: null, time: null, busy: false, requestId: 0 };
+  const state = { services: [], staff: [], settings: null, closedDates: new Map(), serviceId: null, staffId: null, time: null, busy: false, requestId: 0 };
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
   function localDateString(date = new Date()) {
@@ -85,6 +85,17 @@
     $('#bookButton').disabled = true;
     box.replaceChildren();
     if (!dateValue || !service || !staffId || !state.settings) return;
+    if (state.closedDates.has(dateValue)) {
+      $('#slotHint').textContent = '';
+      const reason = state.closedDates.get(dateValue);
+      const message = reason ? `Bu tarihte işletme kapalı: ${reason}` : 'Bu tarihte işletme kapalı. Lütfen başka bir gün seç.';
+      const hint = document.createElement('div');
+      hint.className = 'hint';
+      hint.style.gridColumn = '1 / -1';
+      hint.textContent = message;
+      box.append(hint);
+      return;
+    }
     if (!state.settings.open_days.includes(weekdayIso(dateValue))) {
       $('#slotHint').textContent = '';
       box.innerHTML = '<div class="hint" style="grid-column:1/-1">Bu gün işletme kapalı. Lütfen açık bir gün seç.</div>';
@@ -141,19 +152,21 @@
     const date = $('#bookingDate');
     date.min = localDateString();
     date.value = localDateString();
-    const [servicesResult, staffResult, settingsResult] = await Promise.all([
+    const [servicesResult, staffResult, settingsResult, closuresResult] = await Promise.all([
       supabase.from('services').select('id,name,description,price,duration_minutes,icon').eq('active', true).order('price'),
       supabase.from('staff').select('id,name').eq('active', true).order('name'),
-      supabase.from('business_settings').select('opening_time,closing_time,open_days').eq('id', 1).single()
+      supabase.from('business_settings').select('opening_time,closing_time,open_days').eq('id', 1).single(),
+      supabase.from('business_closures').select('closed_on,reason').gte('closed_on', localDateString()).order('closed_on').limit(1000)
     ]);
-    if (servicesResult.error || staffResult.error || settingsResult.error) {
-      const error = servicesResult.error || staffResult.error || settingsResult.error;
+    if (servicesResult.error || staffResult.error || settingsResult.error || closuresResult.error) {
+      const error = servicesResult.error || staffResult.error || settingsResult.error || closuresResult.error;
       showError(error, 'Randevu bilgileri şu anda alınamıyor. Lütfen daha sonra tekrar dene.');
       return;
     }
     state.services = servicesResult.data || [];
     state.staff = staffResult.data || [];
     state.settings = settingsResult.data;
+    state.closedDates = new Map((closuresResult.data || []).map((closure) => [closure.closed_on, closure.reason || '']));
     if (!state.services.length || !state.staff.length) {
       showNotice('Şu anda randevu alınabilecek hizmet veya berber bulunmuyor.');
       return;

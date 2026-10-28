@@ -29,7 +29,7 @@
       <section id="loginView" class="panel login-card">
         <div class="eyebrow">YÖNETİCİ GİRİŞİ</div>
         <h1>Hoş geldin</h1>
-        <p class="muted">Randevuları görüntülemek için yetkili hesabınla giriş yap.</p>
+        <p class="muted">Randevuları ve işletme ayarlarını yönetmek için yetkili hesabınla giriş yap.</p>
         <div id="loginNotice" class="notice" role="alert"></div>
         <form id="loginForm">
           <label class="field-label" for="email">E-posta</label>
@@ -41,14 +41,60 @@
         <p class="footnote">Yönetici erişimi Supabase hesabındaki yetkiyle doğrulanır. Yetkisiz kullanıcılar randevu ve müşteri bilgilerini göremez.</p>
       </section>
       <section id="dashboardView" hidden>
-        <div class="row-between"><div><div class="eyebrow">YÖNETİM PANELİ</div><h1>Randevular</h1><p id="adminEmail" class="top-caption"></p></div><button class="small-button" id="refreshButton">Yenile</button></div>
+        <div class="row-between"><div><div class="eyebrow">YÖNETİM PANELİ</div><h1>İşletme ve randevular</h1><p id="adminEmail" class="top-caption"></p></div><button class="small-button" id="refreshButton">Yenile</button></div>
         <div id="dashboardNotice" class="notice" role="status"></div>
         <div class="stats">
           <div class="stat-card"><div class="stat-label">Bugün</div><div class="stat-value" id="todayCount">0</div><div class="stat-foot">aktif randevu</div></div>
           <div class="stat-card"><div class="stat-label">Bu ay</div><div class="stat-value" id="monthCount">0</div><div class="stat-foot">iptal olmayan</div></div>
           <div class="stat-card"><div class="stat-label">Bu ay ciro</div><div class="stat-value" id="monthRevenue">₺0</div><div class="stat-foot">planlı / tamamlandı</div></div>
-          <div class="stat-card"><div class="stat-label">Ekip</div><div class="stat-value" id="staffCount">0</div><div class="stat-foot">aktif berber</div></div>
+          <div class="stat-card"><div class="stat-label">Ekip</div><div class="stat-value" id="staffCount">0</div><div class="stat-foot">aktif çalışan</div></div>
         </div>
+
+        <div class="section-head"><h2>İşletme ayarları</h2><span class="badge">Yöneticiye özel</span></div>
+        <div id="managementNotice" class="notice" role="status"></div>
+        <section class="panel management-panel">
+          <h3>Çalışma saatleri ve açık günler</h3>
+          <p class="muted">Bu ayarlar müşteri tarafındaki müsait saatleri ve randevu kurallarını günceller.</p>
+          <form id="hoursForm">
+            <div class="two-fields">
+              <div><label class="field-label" for="openingTime">Açılış</label><input class="field" id="openingTime" type="time" required></div>
+              <div><label class="field-label" for="closingTime">Kapanış</label><input class="field" id="closingTime" type="time" required></div>
+            </div>
+            <div class="field-label">Haftanın açık günleri</div>
+            <div class="day-choices" id="openDays">
+              <label class="day-choice"><input type="checkbox" value="1"><span>Pzt</span></label>
+              <label class="day-choice"><input type="checkbox" value="2"><span>Sal</span></label>
+              <label class="day-choice"><input type="checkbox" value="3"><span>Çar</span></label>
+              <label class="day-choice"><input type="checkbox" value="4"><span>Per</span></label>
+              <label class="day-choice"><input type="checkbox" value="5"><span>Cum</span></label>
+              <label class="day-choice"><input type="checkbox" value="6"><span>Cmt</span></label>
+              <label class="day-choice"><input type="checkbox" value="7"><span>Paz</span></label>
+            </div>
+            <button class="primary management-submit" id="saveHoursButton" type="submit">Çalışma düzenini kaydet</button>
+          </form>
+        </section>
+
+        <section class="panel management-panel">
+          <h3>Çalışanlar</h3>
+          <p class="muted">İsmi güncelleyebilir, çalışanı randevuya açıp kapatabilir veya yeni çalışan ekleyebilirsin. Eski randevular korunsun diye kayıtlar silinmez.</p>
+          <form id="staffForm" class="inline-form">
+            <div class="grow"><label class="field-label" for="newStaffName">Yeni çalışan</label><input class="field" id="newStaffName" type="text" maxlength="60" placeholder="Ad soyad" required></div>
+            <button class="small-button add-button" id="addStaffButton" type="submit">Ekle</button>
+          </form>
+          <div class="management-list" id="staffList"></div>
+        </section>
+
+        <section class="panel management-panel">
+          <h3>Kapalı tarihler</h3>
+          <p class="muted">Tatil veya istisnai kapanış günleri ekle. Bu tarihlerde yeni randevu alınamaz; mevcut randevular otomatik iptal edilmez. Kapanışı kaldırınca tarih yeniden açılır.</p>
+          <form id="closureForm" class="inline-form closure-form">
+            <div><label class="field-label" for="closureDate">Tarih</label><input class="field" id="closureDate" type="date" required></div>
+            <div class="grow"><label class="field-label" for="closureReason">Açıklama <span class="hint">(isteğe bağlı)</span></label><input class="field" id="closureReason" type="text" maxlength="120" placeholder="Örn. Resmî tatil"></div>
+            <button class="small-button add-button" id="addClosureButton" type="submit">Tarihi kapat</button>
+          </form>
+          <div class="management-list" id="closureList"></div>
+        </section>
+
         <div class="section-head"><h2>Bu ayın randevuları</h2><span class="badge" id="listBadge">Güncel</span></div>
         <div class="appt-list" id="appointmentList"></div>
         <p class="footnote">Müşteri adı, telefon ve not bilgileri yalnızca bu yetkili panelde görünür.</p>
