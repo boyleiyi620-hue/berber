@@ -5,6 +5,12 @@ Müşteri randevu sayfası ve yönetici paneli ayrı bağlantılarda çalışır
 - Randevu sayfası: `https://boyleiyi620-hue.github.io/berber/`
 - Yönetici paneli: `https://boyleiyi620-hue.github.io/berber/admin.html`
 
+## Ana ekrana uygulama olarak ekleme
+
+Müşteri randevu sayfası ve yönetim paneli ayrı uygulamalar olarak yüklenebilir. Android/Chrome'da ilgili sayfayı açıp tarayıcı menüsünden **Uygulamayı yükle** veya **Ana ekrana ekle** seçeneğini kullanın. iPhone/iPad'de Safari'de sayfayı açıp **Paylaş > Ana Ekrana Ekle** yolunu izleyin. Masaüstü Chrome ve Edge'de adres çubuğundaki yükleme simgesi kullanılabilir.
+
+Uygulama kabuğu ve statik dosyalar çevrimdışı açılış için önbelleğe alınır. Randevu oluşturma, müsaitlik sorgulama, yönetici girişi ve randevu verilerini yenileme Supabase bağlantısı gerektirir; çevrimdışı çalıştığı varsayılmamalıdır.
+
 ## Supabase güvenliği
 
 Tarayıcıdaki `config.js` yalnızca proje URL'sini ve Supabase **publishable** anahtarını içerir. Gizli `service_role` anahtarı kullanılmaz. RLS kuralları müşteri iletişim bilgilerini anonim kullanıcılara kapatır; randevu oluşturma, çakışma kontrolü yapan veritabanı fonksiyonundan geçer. Yönetici verileri yalnızca `app_metadata.role = admin` olan oturumlara açılır.
