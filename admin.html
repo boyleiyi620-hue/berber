@@ -19,7 +19,7 @@
   <script src="pwa.js" defer></script>
 </head>
 <body>
-  <div class="shell">
+  <div class="shell admin-shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="Randevu sayfasına dön">
         <span class="brand-mark" id="brandMark" aria-hidden="true">✂</span>
@@ -44,95 +44,126 @@
         <p class="footnote">Yönetici erişimi Supabase hesabındaki yetkiyle doğrulanır. Yetkisiz kullanıcılar randevu ve müşteri bilgilerini göremez.</p>
       </section>
       <section id="dashboardView" hidden>
-        <div class="row-between"><div><div class="eyebrow">YÖNETİM PANELİ</div><h1>İşletme ve randevular</h1><p id="adminEmail" class="top-caption"></p></div><button class="small-button" id="refreshButton">Yenile</button></div>
-        <div id="dashboardNotice" class="notice" role="status"></div>
-        <div class="stats">
-          <div class="stat-card"><div class="stat-label">Bugün</div><div class="stat-value" id="todayCount">0</div><div class="stat-foot">aktif randevu</div></div>
-          <div class="stat-card"><div class="stat-label">Bu ay</div><div class="stat-value" id="monthCount">0</div><div class="stat-foot">iptal olmayan</div></div>
-          <div class="stat-card"><div class="stat-label">Bu ay ciro</div><div class="stat-value" id="monthRevenue">₺0</div><div class="stat-foot">planlı / tamamlandı</div></div>
-          <div class="stat-card"><div class="stat-label">Ekip</div><div class="stat-value" id="staffCount">0</div><div class="stat-foot">aktif çalışan</div></div>
+        <div class="row-between admin-page-heading">
+          <div><div class="eyebrow">YÖNETİM PANELİ</div><h1 id="pageTitle">Genel Bakış</h1><p id="adminEmail" class="top-caption"></p></div>
+          <button class="small-button" id="refreshButton">Yenile</button>
         </div>
-
-        <div class="section-head"><h2>İşletme ayarları</h2><span class="badge">Yöneticiye özel</span></div>
+        <div id="dashboardNotice" class="notice" role="status"></div>
         <div id="managementNotice" class="notice" role="status"></div>
-        <section class="panel management-panel identity-panel">
-          <h3>İşletme adı ve logosu</h3>
-          <p class="muted">Müşterilerin gördüğü işletme adını güncelle veya telefonundan bir logo yükle. PNG, JPG ya da WebP; en fazla 2 MB.</p>
-          <form id="identityForm">
-            <label class="field-label" for="businessNameInput">İşletme adı</label>
-            <input class="field" id="businessNameInput" type="text" maxlength="80" autocomplete="organization" placeholder="Örn. Usta Makas" required>
-            <label class="field-label" for="businessLogoFile">Logo dosyası</label>
-            <input class="field file-field" id="businessLogoFile" type="file" accept="image/png,image/jpeg,image/webp">
-            <div class="logo-preview-row"><img id="logoPreview" class="logo-preview" alt="Logo önizlemesi" hidden><span id="logoPreviewHint" class="muted">Henüz özel logo yüklenmedi; varsayılan makas simgesi gösteriliyor.</span></div>
-            <label class="logo-remove-choice"><input id="removeBusinessLogo" type="checkbox"><span>Yüklediğim logoyu kaldır</span></label>
-            <button class="primary management-submit" id="saveIdentityButton" type="submit">İşletme kimliğini kaydet</button>
-          </form>
-        </section>
-        <section class="panel management-panel">
-          <h3>Çalışma saatleri ve açık günler</h3>
-          <p class="muted">Bu ayarlar müşteri tarafındaki müsait saatleri ve randevu kurallarını günceller.</p>
-          <form id="hoursForm">
-            <div class="two-fields">
-              <div><label class="field-label" for="openingTime">Açılış</label><input class="field" id="openingTime" type="time" required></div>
-              <div><label class="field-label" for="closingTime">Kapanış</label><input class="field" id="closingTime" type="time" required></div>
-            </div>
-            <div class="field-label">Haftanın açık günleri</div>
-            <div class="day-choices" id="openDays">
-              <label class="day-choice"><input type="checkbox" value="1"><span>Pzt</span></label>
-              <label class="day-choice"><input type="checkbox" value="2"><span>Sal</span></label>
-              <label class="day-choice"><input type="checkbox" value="3"><span>Çar</span></label>
-              <label class="day-choice"><input type="checkbox" value="4"><span>Per</span></label>
-              <label class="day-choice"><input type="checkbox" value="5"><span>Cum</span></label>
-              <label class="day-choice"><input type="checkbox" value="6"><span>Cmt</span></label>
-              <label class="day-choice"><input type="checkbox" value="7"><span>Paz</span></label>
-            </div>
-            <button class="primary management-submit" id="saveHoursButton" type="submit">Çalışma düzenini kaydet</button>
-          </form>
+
+        <section class="admin-page" data-admin-page="overview">
+          <div class="stats">
+            <div class="stat-card"><div class="stat-label">Bugün</div><div class="stat-value" id="todayCount">0</div><div class="stat-foot">aktif randevu</div></div>
+            <div class="stat-card"><div class="stat-label">Bu ay</div><div class="stat-value" id="monthCount">0</div><div class="stat-foot">iptal olmayan</div></div>
+            <div class="stat-card"><div class="stat-label">Bu ay ciro</div><div class="stat-value" id="monthRevenue">₺0</div><div class="stat-foot">planlı / tamamlandı</div></div>
+            <div class="stat-card"><div class="stat-label">Ekip</div><div class="stat-value" id="staffCount">0</div><div class="stat-foot">aktif çalışan</div></div>
+          </div>
+          <section class="panel overview-note">
+            <div class="eyebrow">İŞLETME ÖZETİ</div>
+            <h2>Her şey bir arada</h2>
+            <p class="muted">Randevuları, hizmetleri, ekibi ve işletme ayarlarını yönetmek için aşağıdaki menüden ilgili sayfayı aç.</p>
+          </section>
         </section>
 
-        <section class="panel management-panel">
-          <h3>Çalışanlar</h3>
-          <p class="muted">İsmi güncelleyebilir, çalışanı randevuya açıp kapatabilir veya yeni çalışan ekleyebilirsin. Eski randevular korunsun diye kayıtlar silinmez.</p>
-          <form id="staffForm" class="inline-form">
-            <div class="grow"><label class="field-label" for="newStaffName">Yeni çalışan</label><input class="field" id="newStaffName" type="text" maxlength="60" placeholder="Ad soyad" required></div>
-            <button class="small-button add-button" id="addStaffButton" type="submit">Ekle</button>
-          </form>
-          <div class="management-list" id="staffList"></div>
+        <section class="admin-page" data-admin-page="appointments">
+          <div class="section-head"><h2>Bu ayın randevuları</h2><span class="badge" id="listBadge">Güncel</span></div>
+          <div class="appt-list" id="appointmentList"></div>
+          <p class="footnote">Müşteri adı, telefon ve not bilgileri yalnızca bu yetkili panelde görünür.</p>
         </section>
 
-        <section class="panel management-panel">
-          <h3>Hizmetler ve ücretler</h3>
-          <p class="muted">Hizmet adı, açıklaması, süresi ve ücretini düzenle veya cilt bakımı gibi yeni hizmetler ekle. Pasife alınan hizmetler geçmiş randevularda korunur ve yeni randevuya kapanır.</p>
-          <form id="serviceForm" class="service-create-form">
-            <div class="two-fields">
-              <div><label class="field-label" for="newServiceName">Hizmet adı</label><input class="field" id="newServiceName" type="text" maxlength="80" placeholder="Örn. Cilt bakımı" required></div>
-              <div><label class="field-label" for="newServiceIcon">Simge</label><input class="field" id="newServiceIcon" type="text" maxlength="8" placeholder="Örn. 💆" value="✂"></div>
-            </div>
-            <label class="field-label" for="newServiceDescription">Kısa açıklama</label>
-            <input class="field" id="newServiceDescription" type="text" maxlength="120" placeholder="Örn. Temizleme ve nem bakımı">
-            <div class="two-fields">
-              <div><label class="field-label" for="newServicePrice">Ücret (₺)</label><input class="field" id="newServicePrice" type="number" min="0" max="999999.99" step="0.01" inputmode="decimal" required></div>
-              <div><label class="field-label" for="newServiceDuration">Süre (dakika)</label><input class="field" id="newServiceDuration" type="number" min="15" max="240" step="15" value="30" inputmode="numeric" required></div>
-            </div>
-            <button class="primary management-submit" id="addServiceButton" type="submit">Hizmeti ekle</button>
-          </form>
-          <div class="management-list" id="serviceList"></div>
+        <section class="admin-page" data-admin-page="services">
+          <div class="section-head"><h2>Hizmetler ve ücretler</h2><span class="badge">Yöneticiye özel</span></div>
+          <section class="panel management-panel">
+            <p class="muted">Hizmet adı, açıklaması, süresi ve ücretini düzenle veya yeni hizmet ekle. Pasife alınan hizmetler geçmiş randevularda korunur.</p>
+            <form id="serviceForm" class="service-create-form">
+              <div class="two-fields">
+                <div><label class="field-label" for="newServiceName">Hizmet adı</label><input class="field" id="newServiceName" type="text" maxlength="80" placeholder="Örn. Cilt bakımı" required></div>
+                <div><label class="field-label" for="newServiceIcon">Simge</label><input class="field" id="newServiceIcon" type="text" maxlength="8" placeholder="Örn. 💆" value="✂"></div>
+              </div>
+              <label class="field-label" for="newServiceDescription">Kısa açıklama</label>
+              <input class="field" id="newServiceDescription" type="text" maxlength="120" placeholder="Örn. Temizleme ve nem bakımı">
+              <div class="two-fields">
+                <div><label class="field-label" for="newServicePrice">Ücret (₺)</label><input class="field" id="newServicePrice" type="number" min="0" max="999999.99" step="0.01" inputmode="decimal" required></div>
+                <div><label class="field-label" for="newServiceDuration">Süre (dakika)</label><input class="field" id="newServiceDuration" type="number" min="15" max="240" step="15" value="30" inputmode="numeric" required></div>
+              </div>
+              <button class="primary management-submit" id="addServiceButton" type="submit">Hizmeti ekle</button>
+            </form>
+            <div class="management-list" id="serviceList"></div>
+          </section>
         </section>
 
-        <section class="panel management-panel">
-          <h3>Kapalı tarihler</h3>
-          <p class="muted">Tatil veya istisnai kapanış günleri ekle. Bu tarihlerde yeni randevu alınamaz; mevcut randevular otomatik iptal edilmez. Kapanışı kaldırınca tarih yeniden açılır.</p>
-          <form id="closureForm" class="inline-form closure-form">
-            <div><label class="field-label" for="closureDate">Tarih</label><input class="field" id="closureDate" type="date" required></div>
-            <div class="grow"><label class="field-label" for="closureReason">Açıklama <span class="hint">(isteğe bağlı)</span></label><input class="field" id="closureReason" type="text" maxlength="120" placeholder="Örn. Resmî tatil"></div>
-            <button class="small-button add-button" id="addClosureButton" type="submit">Tarihi kapat</button>
-          </form>
-          <div class="management-list" id="closureList"></div>
+        <section class="admin-page" data-admin-page="team">
+          <div class="section-head"><h2>Ekip</h2><span class="badge">Yöneticiye özel</span></div>
+          <section class="panel management-panel">
+            <p class="muted">Çalışan ekle, ismini güncelle veya randevuya açık/kapalı durumunu değiştir. Eski randevular korunsun diye kayıtlar silinmez.</p>
+            <form id="staffForm" class="inline-form">
+              <div class="grow"><label class="field-label" for="newStaffName">Yeni çalışan</label><input class="field" id="newStaffName" type="text" maxlength="60" placeholder="Ad soyad" required></div>
+              <button class="small-button add-button" id="addStaffButton" type="submit">Ekle</button>
+            </form>
+            <div class="management-list" id="staffList"></div>
+          </section>
         </section>
 
-        <div class="section-head"><h2>Bu ayın randevuları</h2><span class="badge" id="listBadge">Güncel</span></div>
-        <div class="appt-list" id="appointmentList"></div>
-        <p class="footnote">Müşteri adı, telefon ve not bilgileri yalnızca bu yetkili panelde görünür.</p>
+        <section class="admin-page" data-admin-page="schedule">
+          <div class="section-head"><h2>Çalışma düzeni</h2><span class="badge">Yöneticiye özel</span></div>
+          <section class="panel management-panel">
+            <h3>Çalışma saatleri ve açık günler</h3>
+            <p class="muted">Bu ayarlar müşteri tarafındaki müsait saatleri ve randevu kurallarını günceller.</p>
+            <form id="hoursForm">
+              <div class="two-fields">
+                <div><label class="field-label" for="openingTime">Açılış</label><input class="field" id="openingTime" type="time" required></div>
+                <div><label class="field-label" for="closingTime">Kapanış</label><input class="field" id="closingTime" type="time" required></div>
+              </div>
+              <div class="field-label">Haftanın açık günleri</div>
+              <div class="day-choices" id="openDays">
+                <label class="day-choice"><input type="checkbox" value="1"><span>Pzt</span></label>
+                <label class="day-choice"><input type="checkbox" value="2"><span>Sal</span></label>
+                <label class="day-choice"><input type="checkbox" value="3"><span>Çar</span></label>
+                <label class="day-choice"><input type="checkbox" value="4"><span>Per</span></label>
+                <label class="day-choice"><input type="checkbox" value="5"><span>Cum</span></label>
+                <label class="day-choice"><input type="checkbox" value="6"><span>Cmt</span></label>
+                <label class="day-choice"><input type="checkbox" value="7"><span>Paz</span></label>
+              </div>
+              <button class="primary management-submit" id="saveHoursButton" type="submit">Çalışma düzenini kaydet</button>
+            </form>
+          </section>
+          <section class="panel management-panel">
+            <h3>Kapalı tarihler</h3>
+            <p class="muted">Tatil veya istisnai kapanış günleri ekle. Bu tarihlerde yeni randevu alınamaz; mevcut randevular otomatik iptal edilmez.</p>
+            <form id="closureForm" class="inline-form closure-form">
+              <div><label class="field-label" for="closureDate">Tarih</label><input class="field" id="closureDate" type="date" required></div>
+              <div class="grow"><label class="field-label" for="closureReason">Açıklama <span class="hint">(isteğe bağlı)</span></label><input class="field" id="closureReason" type="text" maxlength="120" placeholder="Örn. Resmî tatil"></div>
+              <button class="small-button add-button" id="addClosureButton" type="submit">Tarihi kapat</button>
+            </form>
+            <div class="management-list" id="closureList"></div>
+          </section>
+        </section>
+
+        <section class="admin-page" data-admin-page="settings">
+          <div class="section-head"><h2>İşletme ayarları</h2><span class="badge">Yöneticiye özel</span></div>
+          <section class="panel management-panel identity-panel">
+            <h3>İşletme adı ve logosu</h3>
+            <p class="muted">Müşterilerin gördüğü işletme adını güncelle veya telefonundan bir logo yükle. PNG, JPG ya da WebP; en fazla 2 MB.</p>
+            <form id="identityForm">
+              <label class="field-label" for="businessNameInput">İşletme adı</label>
+              <input class="field" id="businessNameInput" type="text" maxlength="80" autocomplete="organization" placeholder="Örn. Usta Makas" required>
+              <label class="field-label" for="businessLogoFile">Logo dosyası</label>
+              <input class="field file-field" id="businessLogoFile" type="file" accept="image/png,image/jpeg,image/webp">
+              <div class="logo-preview-row"><img id="logoPreview" class="logo-preview" alt="Logo önizlemesi" hidden><span id="logoPreviewHint" class="muted">Henüz özel logo yüklenmedi; varsayılan makas simgesi gösteriliyor.</span></div>
+              <label class="logo-remove-choice"><input id="removeBusinessLogo" type="checkbox"><span>Yüklediğim logoyu kaldır</span></label>
+              <button class="primary management-submit" id="saveIdentityButton" type="submit">İşletme kimliğini kaydet</button>
+            </form>
+          </section>
+        </section>
+
+        <nav class="admin-bottom-nav" aria-label="Yönetim sayfaları">
+          <a class="admin-nav-item" data-admin-nav="overview" href="?page=overview"><span class="admin-nav-icon" aria-hidden="true">⌂</span><span>Genel Bakış</span></a>
+          <a class="admin-nav-item" data-admin-nav="appointments" href="?page=appointments"><span class="admin-nav-icon" aria-hidden="true">▤</span><span>Randevular</span></a>
+          <a class="admin-nav-item" data-admin-nav="services" href="?page=services"><span class="admin-nav-icon" aria-hidden="true">✂</span><span>Hizmetler</span></a>
+          <a class="admin-nav-item" data-admin-nav="team" href="?page=team"><span class="admin-nav-icon" aria-hidden="true">♙</span><span>Ekip</span></a>
+          <a class="admin-nav-item" data-admin-nav="schedule" href="?page=schedule"><span class="admin-nav-icon" aria-hidden="true">◷</span><span>Çalışma Düzeni</span></a>
+          <a class="admin-nav-item" data-admin-nav="settings" href="?page=settings"><span class="admin-nav-icon" aria-hidden="true">⚙</span><span>İşletme Ayarları</span></a>
+        </nav>
       </section>
     </main>
   </div>

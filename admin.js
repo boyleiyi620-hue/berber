@@ -12,6 +12,29 @@
   let currentBusinessSettings = null;
   let previewObjectUrl = null;
 
+  const ADMIN_PAGES = {
+    overview: 'Genel Bakış',
+    appointments: 'Randevular',
+    services: 'Hizmetler ve Ücretler',
+    team: 'Ekip',
+    schedule: 'Çalışma Düzeni',
+    settings: 'İşletme Ayarları'
+  };
+  function updateAdminPage() {
+    const requestedPage = new URLSearchParams(window.location.search).get('page');
+    const page = Object.hasOwn(ADMIN_PAGES, requestedPage) ? requestedPage : 'overview';
+    document.querySelectorAll('[data-admin-page]').forEach((view) => {
+      view.hidden = view.dataset.adminPage !== page;
+    });
+    $('#pageTitle').textContent = ADMIN_PAGES[page];
+    document.querySelectorAll('[data-admin-nav]').forEach((link) => {
+      const active = link.dataset.adminNav === page;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+  }
+
   function setNotice(target, message, success = false) {
     const box = $(target);
     box.textContent = message;
@@ -35,6 +58,7 @@
     loginView.hidden = true;
     dashboardView.hidden = false;
     logoutButton.hidden = false;
+    updateAdminPage();
     $('#adminEmail').textContent = user.email || 'Yetkili yönetici';
     hideNotice('#loginNotice');
     loadDashboard();
