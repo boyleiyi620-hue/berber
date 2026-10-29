@@ -19,3 +19,19 @@
   .top-actions{gap:6px}
   .admin-link{padding:8px 10px;font-size:9px}
 }
+
+
+/* Service catalog management controls in the admin panel. */
+.service-create-form{margin-top:4px}
+.service-edit-grid{display:grid;grid-template-columns:2fr 1fr 1fr 2fr .8fr;gap:8px;width:100%;align-items:end}
+.service-edit-field{display:block;min-width:0}
+.service-edit-label{display:block;margin:0 0 5px;color:#69746c;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.service-edit-field .field{padding:9px 8px;font-size:11px}
+.management-item.service-item{align-items:stretch;flex-direction:column;gap:10px;padding:11px}
+.service-actions{width:100%;justify-content:flex-end}
+@media(max-width:520px){
+  .service-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .service-edit-field:nth-child(1),.service-edit-field:nth-child(4){grid-column:1/-1}
+  .service-edit-field:nth-child(5){grid-column:2}
+  .service-actions .small-button{flex:1}
+}

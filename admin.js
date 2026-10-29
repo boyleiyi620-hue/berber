@@ -193,6 +193,61 @@
       box.append(card);
     });
   }
+  function renderServices(rows) {
+    const box = $('#serviceList');
+    box.replaceChildren();
+    if (!rows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'Henüz hizmet eklenmemiş.';
+      box.append(empty);
+      return;
+    }
+    rows.forEach((service) => {
+      const card = document.createElement('article');
+      card.className = 'management-item service-item';
+      const fields = document.createElement('div');
+      fields.className = 'service-edit-grid';
+      const makeField = (labelText, type, value, options = {}) => {
+        const wrapper = document.createElement('label');
+        wrapper.className = 'service-edit-field';
+        const caption = document.createElement('span');
+        caption.className = 'service-edit-label';
+        caption.textContent = labelText;
+        const input = document.createElement('input');
+        input.className = 'field';
+        input.type = type;
+        input.value = value ?? '';
+        Object.entries(options).forEach(([key, optionValue]) => input.setAttribute(key, String(optionValue)));
+        wrapper.append(caption, input);
+        return { wrapper, input };
+      };
+      const name = makeField('Hizmet adı', 'text', service.name, { maxlength: 80 });
+      const price = makeField('Ücret (₺)', 'number', service.price, { min: 0, max: 999999.99, step: 0.01, inputmode: 'decimal' });
+      const duration = makeField('Süre (dk)', 'number', service.duration_minutes, { min: 15, max: 240, step: 15, inputmode: 'numeric' });
+      const description = makeField('Açıklama', 'text', service.description, { maxlength: 120 });
+      const icon = makeField('Simge', 'text', service.icon, { maxlength: 8 });
+      fields.append(name.wrapper, price.wrapper, duration.wrapper, description.wrapper, icon.wrapper);
+      const status = document.createElement('span');
+      status.className = `staff-status${service.active ? ' is-active' : ''}`;
+      status.textContent = service.active ? 'Aktif' : 'Pasif';
+      const actions = document.createElement('div');
+      actions.className = 'management-actions service-actions';
+      const save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'small-button';
+      save.textContent = 'Değişiklikleri kaydet';
+      save.addEventListener('click', () => updateService(service.id, { name: name.input, price: price.input, duration: duration.input, description: description.input, icon: icon.input }, save));
+      const active = document.createElement('button');
+      active.type = 'button';
+      active.className = `small-button${service.active ? ' danger' : ''}`;
+      active.textContent = service.active ? 'Pasifleştir' : 'Aktifleştir';
+      active.addEventListener('click', () => toggleService(service.id, !service.active, active));
+      actions.append(save, active);
+      card.append(fields, status, actions);
+      box.append(card);
+    });
+  }
   function renderClosures(rows) {
     const box = $('#closureList');
     box.replaceChildren();
@@ -232,11 +287,12 @@
     const today = localDateString(now);
     const month = today.slice(0, 7);
     const startOfMonth = new Date(`${month}-01T00:00:00`).toISOString();
-    const [appointmentsResult, staffResult, settingsResult, closuresResult] = await Promise.all([
+    const [appointmentsResult, staffResult, settingsResult, closuresResult, servicesResult] = await Promise.all([
       supabase.from('appointments').select('id,client_name,phone,note,starts_at,duration_minutes,price,status,staff(name),services(name)').gte('starts_at', startOfMonth).order('starts_at').limit(100),
       supabase.from('staff').select('id,name,active').order('created_at').limit(100),
       supabase.from('business_settings').select('opening_time,closing_time,open_days,business_name,logo_url').eq('id', 1).single(),
-      supabase.from('business_closures').select('closed_on,reason').gte('closed_on', today).order('closed_on').limit(1000)
+      supabase.from('business_closures').select('closed_on,reason').gte('closed_on', today).order('closed_on').limit(1000),
+      supabase.from('services').select('id,name,description,price,duration_minutes,icon,active').order('name').limit(100)
     ]);
     if (appointmentsResult.error) {
       console.error(appointmentsResult.error);
@@ -251,10 +307,10 @@
       $('#monthRevenue').textContent = money(monthRows.reduce((sum, item) => sum + Number(item.price), 0));
       renderAppointments(appointments);
     }
-    if (staffResult.error || settingsResult.error || closuresResult.error) {
-      const error = staffResult.error || settingsResult.error || closuresResult.error;
+    if (staffResult.error || settingsResult.error || closuresResult.error || servicesResult.error) {
+      const error = staffResult.error || settingsResult.error || closuresResult.error || servicesResult.error;
       console.error(error);
-      setNotice('#managementNotice', 'Ekip ve işletme ayarları yüklenemedi. Yetkiyi ve bağlantıyı kontrol et.');
+      setNotice('#managementNotice', 'Ekip, hizmetler ve işletme ayarları yüklenemedi. Yetkiyi ve bağlantıyı kontrol et.');
       return;
     }
     const staff = staffResult.data || [];
@@ -266,6 +322,7 @@
     setLogoPreview(currentBusinessSettings.logo_url || '');
     $('#staffCount').textContent = String(staff.filter((person) => person.active).length);
     renderStaff(staff);
+    renderServices(servicesResult.data || []);
     renderClosures(closuresResult.data || []);
     $('#openingTime').value = String(settingsResult.data.opening_time).slice(0, 5);
     $('#closingTime').value = String(settingsResult.data.closing_time).slice(0, 5);
@@ -298,6 +355,48 @@
     if (error) return showSaveError(error, 'Çalışan adı kaydedilemedi.');
     await loadDashboard();
     setNotice('#managementNotice', 'Çalışan adı güncellendi.', true);
+  }
+  function serviceDraft(fields) {
+    const name = fields.name.value.trim();
+    const description = fields.description.value.trim();
+    const icon = fields.icon.value.trim() || '✂';
+    const price = Number(fields.price.value);
+    const duration = Number(fields.duration.value);
+    if (!name || name.length > 80) {
+      setNotice('#managementNotice', 'Hizmet adı 1–80 karakter olmalı.');
+      return null;
+    }
+    if (description.length > 120 || icon.length > 8) {
+      setNotice('#managementNotice', 'Açıklama en fazla 120, simge en fazla 8 karakter olabilir.');
+      return null;
+    }
+    if (!fields.price.value.trim() || !Number.isFinite(price) || price < 0 || price > 999999.99 || Math.abs(price * 100 - Math.round(price * 100)) > 0.0000001) {
+      setNotice('#managementNotice', 'Ücret 0–999.999,99 ₺ arasında ve en fazla iki ondalık basamaklı olmalı.');
+      return null;
+    }
+    if (!Number.isInteger(duration) || duration < 15 || duration > 240 || duration % 15 !== 0) {
+      setNotice('#managementNotice', 'Hizmet süresi 15–240 dakika arasında, 15 dakikanın katı olmalı.');
+      return null;
+    }
+    return { name, description, price, duration_minutes: duration, icon };
+  }
+  async function updateService(id, fields, button) {
+    const draft = serviceDraft(fields);
+    if (!draft) return;
+    button.disabled = true;
+    const { error } = await supabase.from('services').update(draft).eq('id', id);
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Hizmet güncellenemedi.');
+    await loadDashboard();
+    setNotice('#managementNotice', 'Hizmet bilgileri ve ücreti güncellendi. Yeni ücret gelecekteki randevulara uygulanır.', true);
+  }
+  async function toggleService(id, active, button) {
+    button.disabled = true;
+    const { error } = await supabase.from('services').update({ active }).eq('id', id);
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Hizmet durumu güncellenemedi.');
+    await loadDashboard();
+    setNotice('#managementNotice', active ? 'Hizmet yeniden randevuya açıldı.' : 'Hizmet pasife alındı; geçmiş randevular korundu.', true);
   }
   async function toggleStaff(id, active, button) {
     button.disabled = true;
@@ -435,6 +534,33 @@
     $('#newStaffName').value = '';
     await loadDashboard();
     setNotice('#managementNotice', 'Yeni çalışan eklendi.', true);
+  });
+
+  $('#serviceForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    hideNotice('#managementNotice');
+    const fields = {
+      name: $('#newServiceName'),
+      description: $('#newServiceDescription'),
+      price: $('#newServicePrice'),
+      duration: $('#newServiceDuration'),
+      icon: $('#newServiceIcon')
+    };
+    const draft = serviceDraft(fields);
+    if (!draft) return;
+    const button = $('#addServiceButton');
+    button.disabled = true;
+    const id = `srv-${window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+    const { error } = await supabase.from('services').insert({ id, ...draft, active: true });
+    button.disabled = false;
+    if (error) return showSaveError(error, 'Hizmet eklenemedi. Yetkiyi ve bağlantıyı kontrol et.');
+    $('#newServiceName').value = '';
+    $('#newServiceDescription').value = '';
+    $('#newServicePrice').value = '';
+    $('#newServiceDuration').value = '30';
+    $('#newServiceIcon').value = '✂';
+    await loadDashboard();
+    setNotice('#managementNotice', 'Yeni hizmet eklendi ve randevuya açıldı.', true);
   });
 
   $('#closureForm').addEventListener('submit', async (event) => {

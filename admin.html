@@ -101,6 +101,25 @@
         </section>
 
         <section class="panel management-panel">
+          <h3>Hizmetler ve ücretler</h3>
+          <p class="muted">Hizmet adı, açıklaması, süresi ve ücretini düzenle veya cilt bakımı gibi yeni hizmetler ekle. Pasife alınan hizmetler geçmiş randevularda korunur ve yeni randevuya kapanır.</p>
+          <form id="serviceForm" class="service-create-form">
+            <div class="two-fields">
+              <div><label class="field-label" for="newServiceName">Hizmet adı</label><input class="field" id="newServiceName" type="text" maxlength="80" placeholder="Örn. Cilt bakımı" required></div>
+              <div><label class="field-label" for="newServiceIcon">Simge</label><input class="field" id="newServiceIcon" type="text" maxlength="8" placeholder="Örn. 💆" value="✂"></div>
+            </div>
+            <label class="field-label" for="newServiceDescription">Kısa açıklama</label>
+            <input class="field" id="newServiceDescription" type="text" maxlength="120" placeholder="Örn. Temizleme ve nem bakımı">
+            <div class="two-fields">
+              <div><label class="field-label" for="newServicePrice">Ücret (₺)</label><input class="field" id="newServicePrice" type="number" min="0" max="999999.99" step="0.01" inputmode="decimal" required></div>
+              <div><label class="field-label" for="newServiceDuration">Süre (dakika)</label><input class="field" id="newServiceDuration" type="number" min="15" max="240" step="15" value="30" inputmode="numeric" required></div>
+            </div>
+            <button class="primary management-submit" id="addServiceButton" type="submit">Hizmeti ekle</button>
+          </form>
+          <div class="management-list" id="serviceList"></div>
+        </section>
+
+        <section class="panel management-panel">
           <h3>Kapalı tarihler</h3>
           <p class="muted">Tatil veya istisnai kapanış günleri ekle. Bu tarihlerde yeni randevu alınamaz; mevcut randevular otomatik iptal edilmez. Kapanışı kaldırınca tarih yeniden açılır.</p>
           <form id="closureForm" class="inline-form closure-form">

@@ -7,7 +7,7 @@ Müşteri randevu sayfası ve yönetici paneli ayrı bağlantılarda çalışır
 
 ## Yönetim paneli
 
-Yetkili yönetici hesabıyla giriş yaptıktan sonra işletme adını ve logosunu değiştirebilir, haftalık çalışma saatlerini ve açık günleri düzenleyebilir, çalışan ekleyip adını güncelleyebilir veya randevuya kapatabilir, ayrıca istisnai kapalı tarihleri yönetebilirsiniz. Logo yükleme PNG, JPG ve WebP dosyalarını (en fazla 2 MB) kabul eder; görsel dosyaları Supabase Storage'da saklanır. Çalışan kayıtları geçmiş randevulardaki ilişkiyi korumak için silinmez; pasife alınır. Kapalı tarihler müşteri takviminde gösterilmez ve veritabanı yeni rezervasyonları da reddeder.
+Yetkili yönetici hesabıyla giriş yaptıktan sonra işletme adını ve logosunu değiştirebilir, haftalık çalışma saatlerini ve açık günleri düzenleyebilir, çalışan ekleyip adını güncelleyebilir veya randevuya kapatabilir, hizmet ve ücretleri yönetebilir, ayrıca istisnai kapalı tarihleri yönetebilirsiniz. Hizmet eklerken ad, açıklama, simge, ücret ve 15 dakikalık aralıklarla 15–240 dakika arasında süre girilir. Ücret değişiklikleri yeni randevulara uygulanır; mevcut randevuların kaydedilmiş ücreti değişmez. Geçmiş randevuları korumak için hizmetler silinmez, pasife alınır. Logo yükleme PNG, JPG ve WebP dosyalarını (en fazla 2 MB) kabul eder; görsel dosyaları Supabase Storage'da saklanır. Çalışan kayıtları geçmiş randevulardaki ilişkiyi korumak için silinmez; pasife alınır. Kapalı tarihler müşteri takviminde gösterilmez ve veritabanı yeni rezervasyonları da reddeder.
 
 ## Ana ekrana uygulama olarak ekleme
 
