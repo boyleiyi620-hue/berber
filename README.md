@@ -19,6 +19,10 @@ Uygulama kabuğu ve statik dosyalar çevrimdışı açılış için önbelleğe 
 
 Tarayıcıdaki `config.js` yalnızca proje URL'sini ve Supabase **publishable** anahtarını içerir. Gizli `service_role` anahtarı kullanılmaz. RLS kuralları müşteri iletişim bilgilerini anonim kullanıcılara kapatır; randevu oluşturma, çakışma kontrolü yapan veritabanı fonksiyonundan geçer. Yönetici verileri yalnızca `app_metadata.role = admin` olan oturumlara açılır.
 
+Müşteri sayfası yönetici oturumunu saklamaz veya devralmaz. Admin yetkileri yalnızca panelin kullandığı tablo ve sütunlarla sınırlandırılmıştır; randevu RPC'si anonim çağrılara açıktır ve aynı telefon numarasından saatte en fazla beş başarılı istek kabul eder. Bu telefon bazlı sınır, CAPTCHA veya dağıtık bot saldırılarına karşı IP tabanlı korumanın yerini tutmaz. Supabase JS tarayıcı paketi yerel olarak sabit `2.118.0` sürümünde tutulur.
+
+Randevular saatte bir kontrol edilir. Bir kayıt yalnızca kendi `created_at` zamanı en az 7 günlük olduğunda ve ya iptal edilmiş ya da başlangıç zamanı geçmiş olduğunda silinir; gelecekteki aktif randevular korunur.
+
 ## İlk yönetici hesabını açma
 
 1. Supabase Dashboard > Authentication > Users bölümünde işletme sahibine ait bir kullanıcı oluşturun (e-posta/şifre). Hesabı e-posta doğrulaması yapılmış/confirmed olarak açın.

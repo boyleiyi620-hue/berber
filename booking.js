@@ -1,7 +1,8 @@
 (() => {
   const supabase = window.supabase.createClient(
     window.BERBER_SUPABASE_URL,
-    window.BERBER_SUPABASE_PUBLISHABLE_KEY
+    window.BERBER_SUPABASE_PUBLISHABLE_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
   );
   const $ = (selector) => document.querySelector(selector);
   const state = { services: [], staff: [], settings: null, closedDates: new Map(), serviceId: null, staffId: null, time: null, busy: false, requestId: 0 };
@@ -110,15 +111,14 @@
       const reason = state.closedDates.get(dateValue);
       const message = reason ? `Bu tarihte işletme kapalı: ${reason}` : 'Bu tarihte işletme kapalı. Lütfen başka bir gün seç.';
       const hint = document.createElement('div');
-      hint.className = 'hint';
-      hint.style.gridColumn = '1 / -1';
+      hint.className = 'hint full-width';
       hint.textContent = message;
       box.append(hint);
       return;
     }
     if (!state.settings.open_days.includes(weekdayIso(dateValue))) {
       $('#slotHint').textContent = '';
-      box.innerHTML = '<div class="hint" style="grid-column:1/-1">Bu gün işletme kapalı. Lütfen açık bir gün seç.</div>';
+      box.innerHTML = '<div class="hint full-width">Bu gün işletme kapalı. Lütfen açık bir gün seç.</div>';
       return;
     }
     const { data: busySlots, error } = await supabase.rpc('get_busy_slots', {
@@ -129,7 +129,7 @@
     if (requestId !== state.requestId) return;
     if (error) {
       showError(error, 'Müsait saatler yüklenemedi. Lütfen bağlantını kontrol edip tekrar dene.');
-      box.innerHTML = '<div class="hint" style="grid-column:1/-1">Saatler şu anda yüklenemiyor.</div>';
+      box.innerHTML = '<div class="hint full-width">Saatler şu anda yüklenemiyor.</div>';
       return;
     }
     const start = minutes(state.settings.opening_time);
@@ -150,7 +150,7 @@
     const availableCount = intervals.filter((slot) => !slot.unavailable).length;
     $('#slotHint').textContent = availableCount ? `· ${availableCount} saat uygun` : '· uygun saat yok';
     if (!intervals.length) {
-      box.innerHTML = '<div class="hint" style="grid-column:1/-1">Bu hizmet için uygun çalışma saati yok.</div>';
+      box.innerHTML = '<div class="hint full-width">Bu hizmet için uygun çalışma saati yok.</div>';
       return;
     }
     intervals.forEach(({ time, unavailable }) => {
@@ -208,7 +208,8 @@
     const note = $('#clientNote').value.trim();
     const dateValue = $('#bookingDate').value;
     if (!clientName) return showNotice('Lütfen adını yaz.');
-    if (phone.length < 5) return showNotice('Lütfen geçerli bir telefon numarası yaz.');
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phone.length < 5 || phoneDigits.length < 5 || phoneDigits.length > 15) return showNotice('Lütfen geçerli bir telefon numarası yaz.');
     if (!state.time) return showNotice('Lütfen müsait saatlerden birini seç.');
     if (state.busy) return;
     state.busy = true;

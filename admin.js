@@ -97,7 +97,12 @@
     const box = $('#appointmentList');
     box.replaceChildren();
     if (!rows.length) {
-      box.innerHTML = '<div class="empty"><strong>Yaklaşan randevu yok</strong>Yeni randevular burada görünecek.</div>';
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      const title = document.createElement('strong');
+      title.textContent = 'Yaklaşan randevu yok';
+      empty.append(title, document.createTextNode('Yeni randevular burada görünecek.'));
+      box.append(empty);
       return;
     }
     rows.forEach((appointment) => {
@@ -109,7 +114,20 @@
       const staffName = appointment.staff?.name || 'Berber';
       const statusLabel = appointment.status === 'completed' ? 'Tamamlandı' : appointment.status === 'cancelled' ? 'İptal edildi' : 'Onaylı';
       const details = appointment.note ? `${appointment.phone} · Not: ${appointment.note}` : appointment.phone;
-      info.innerHTML = `<div class="appt-title">${displayTimestamp(appointment.starts_at)} · ${statusLabel}</div><div class="appt-meta"><strong>${escapeHtml(appointment.client_name)}</strong> · ${escapeHtml(serviceName)} · ${escapeHtml(staffName)}<br>${escapeHtml(details || '')}</div>`;
+      const title = document.createElement('div');
+      title.className = 'appt-title';
+      title.textContent = `${displayTimestamp(appointment.starts_at)} · ${statusLabel}`;
+      const meta = document.createElement('div');
+      meta.className = 'appt-meta';
+      const clientName = document.createElement('strong');
+      clientName.textContent = appointment.client_name;
+      meta.append(
+        clientName,
+        document.createTextNode(` · ${serviceName} · ${staffName}`),
+        document.createElement('br'),
+        document.createTextNode(details || '')
+      );
+      info.append(title, meta);
       const price = document.createElement('div');
       price.className = 'appt-price';
       price.textContent = money(appointment.price);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'berber-pwa-v3';
+const CACHE_NAME = 'berber-pwa-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const APP_SHELL = [
   './booking.js',
   './admin.js',
   './config.js',
+  './vendor/supabase-js-2.118.0.js',
   './pwa.js',
   './manifest.webmanifest',
   './admin.webmanifest',
