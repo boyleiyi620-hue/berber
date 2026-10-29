@@ -5,3 +5,17 @@
 .brand-mark[hidden],.brand-logo[hidden],.logo-preview[hidden]{display:none}.brand-logo{width:42px;height:42px;flex:none;object-fit:contain;padding:4px;background:#fff;border:1px solid var(--line);border-radius:15px}.brand-copy{min-width:0}.brand-name{max-width:min(38vw,270px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.04em}.file-field{padding:9px;font-size:11px}.file-field::file-selector-button{margin-right:10px;border:1px solid var(--line);border-radius:8px;background:#f4f1e9;padding:7px 9px;color:var(--green);font:inherit;font-weight:750}.logo-preview-row{display:flex;align-items:center;gap:11px;min-height:54px;margin-top:10px}.logo-preview{width:54px;height:54px;object-fit:contain;padding:4px;border:1px solid var(--line);border-radius:14px;background:#fff}.logo-preview-row .muted{line-height:1.45}.logo-remove-choice{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--muted);cursor:pointer}.logo-remove-choice input{width:15px;height:15px;accent-color:var(--green)}.identity-panel form>.field-label:first-child{margin-top:12px}
 
 .full-width{grid-column:1/-1}
+
+/* Keep the admin header usable on narrow phones and embedded browser views. */
+@media(max-width:680px){
+  .topbar{flex-wrap:wrap;align-items:flex-start;row-gap:10px}
+  .topbar>.brand{flex:1 1 100%;min-width:0}
+  .brand-copy{flex:1;min-width:0}
+  .brand-name{max-width:100%;font-size:16px;letter-spacing:.02em;line-height:1.15;white-space:normal;overflow-wrap:anywhere;text-overflow:clip}
+  .top-actions{width:100%;justify-content:flex-end}
+}
+@media(max-width:380px){
+  .topbar{padding-left:16px;padding-right:16px}
+  .top-actions{gap:6px}
+  .admin-link{padding:8px 10px;font-size:9px}
+}
